@@ -18,6 +18,7 @@ Usage:
 
 import os
 import re
+import shutil
 import sys
 
 import requests
@@ -97,14 +98,26 @@ def build_vectorstore(sections: list[dict]) -> None:
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
-    os.makedirs(PERSIST_DIR, exist_ok=True)
-    vectordb = Chroma.from_texts(
-        texts=docs_text,
-        embedding=embeddings,
-        metadatas=metadatas,
-        persist_directory=PERSIST_DIR,
-    )
-    vectordb.persist()
+    # Build into a temp dir and swap it in only on success, so a failed run
+    # (network, API error) never destroys the existing DB and re-runs never
+    # append duplicate chunks.
+    tmp_dir = PERSIST_DIR + ".tmp"
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    os.makedirs(tmp_dir)
+    try:
+        vectordb = Chroma.from_texts(
+            texts=docs_text,
+            embedding=embeddings,
+            metadatas=metadatas,
+            persist_directory=tmp_dir,
+        )
+        vectordb.persist()
+        del vectordb
+    except Exception:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise
+    shutil.rmtree(PERSIST_DIR, ignore_errors=True)
+    os.rename(tmp_dir, PERSIST_DIR)
     print(f"Hotovo. Vektorová databáze uložena do: {PERSIST_DIR}")
 
 
