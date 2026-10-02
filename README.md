@@ -86,7 +86,7 @@ zakonik-prace-rag/
 │   └── main.py          # FastAPI backend s /api/chat
 ├── static/
 │   └── index.html        # chat UI
-├── data/chroma/          # vytvoří se po spuštění ingest.py (git-ignored)
+├── data/chroma/          # hotová vektorová DB (obnovení: make ingest)
 ├── requirements.txt
 ├── Dockerfile
 └── .env.example
