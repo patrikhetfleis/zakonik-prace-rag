@@ -7,10 +7,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Vector DB is built at build time so the container is ready to serve
-# immediately (requires OPENAI_API_KEY as a build secret / build arg).
-# For a simpler setup, you can instead run ingest.py once as a startup task.
+# The vector DB is built in the background on first start (see app/main.py),
+# because the container disk is ephemeral and data/chroma is not in git.
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

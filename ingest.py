@@ -108,19 +108,28 @@ def build_vectorstore(sections: list[dict]) -> None:
     print(f"Hotovo. Vektorová databáze uložena do: {PERSIST_DIR}")
 
 
-def main() -> None:
-    load_dotenv()
+def build_database() -> None:
+    """Fetch the law, split it and (re)build the vector DB. Raises RuntimeError on failure."""
     if not os.getenv("OPENAI_API_KEY"):
-        print("Chybí OPENAI_API_KEY v prostředí. Nastav ho v .env nebo exportuj.")
-        sys.exit(1)
+        raise RuntimeError("Chybí OPENAI_API_KEY v prostředí. Nastav ho v .env nebo exportuj.")
 
     raw_text = fetch_law_text()
     sections = split_into_sections(raw_text)
     if not sections:
-        print("Nepodařilo se rozparsovat žádné paragrafy — zkontroluj SOURCE_URL / strukturu stránky.")
-        sys.exit(1)
+        raise RuntimeError(
+            "Nepodařilo se rozparsovat žádné paragrafy — zkontroluj SOURCE_URL / strukturu stránky."
+        )
 
     build_vectorstore(sections)
+
+
+def main() -> None:
+    load_dotenv()
+    try:
+        build_database()
+    except RuntimeError as e:
+        print(e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
